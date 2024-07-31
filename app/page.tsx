@@ -1,95 +1,179 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
+import { useState, useEffect } from 'react';
+import { firestore } from '@/firebase';
+import { Box, Button, Modal, Stack, TextField, Typography } from '@mui/material';
+import { collection, deleteDoc, getDoc, getDocs, query, setDoc, doc } from 'firebase/firestore';
+
+interface InventoryItem {
+  name: string;
+  [key: string]: any; // Allows adding properties dynamically
+}
+
+const COLLECTION_NAME = 'inventory';
 
 export default function Home() {
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [open, setOpen] = useState(false);
+  const [itemName, setItemName] = useState('');
+
+  const updateInventory = async () => {
+    const snapshot = query(collection(firestore, COLLECTION_NAME));
+    const docs = await getDocs(snapshot);
+    const inventoryList: InventoryItem[] = [];
+    docs.forEach((doc) =>
+      inventoryList.push({ name: doc.id, ...doc.data() })
+    );
+    setInventory(inventoryList);
+  };
+
+  const addItem = async (item: string) => {
+    const docRef = doc(collection(firestore, COLLECTION_NAME), item);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const { quantity } = docSnap.data();
+      await setDoc(docRef, { quantity: quantity + 1 });
+    }
+    else {
+      await setDoc(docRef, { quantity: 1 });
+    }
+
+    await updateInventory();
+  };
+
+  const removeItem = async (item: string) => {
+    const docRef = doc(collection(firestore, COLLECTION_NAME), item);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const { quantity } = docSnap.data();
+      if (quantity == 1) {
+        await deleteDoc(docRef);
+      }
+      else {
+        await setDoc(docRef, { quantity: quantity - 1 });
+      }
+    }
+
+    await updateInventory();
+  };
+
+  useEffect(() => {
+    updateInventory();
+  }, []);
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <Box
+      width="100vw"
+      height="100vh"
+      display="flex"
+      flexDirection="column"
+      justifyContent="center"
+      alignItems="center"
+      gap={2}
+      p={4}
+    >
+      <Typography variant="h1">Inventory Management</Typography>
+      <Button variant="contained" onClick={handleOpen}>New Item</Button>
+      <Box
+        border="2px solid #333"
+        width="800px"
+        bgcolor="#ADD8E6"
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+        alignItems="center"
+      >
+        <Typography variant='h4' color='#333' p={2}>
+          Items
+        </Typography>
+
+        <Stack
+          width="100%"
+          bgcolor="white"
+          maxHeight="250px"
+          spacing={2}
+          overflow="auto"
+        >
+          {inventory.map(item => (
+            <Box
+              key={item.name}
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              bgcolor="#f0f0f0"
+              p={5}
+            >
+              <Typography variant="h5" color="#333" textAlign='center'>
+                {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+              </Typography>
+              <Typography variant="h6" color="#333" textAlign='center'>
+                {item.quantity}
+              </Typography>
+              <Stack gap={1} direction="row">
+                <Button title="Add" variant="contained" onClick={() => addItem(item.name)} sx={{
+                  minWidth: "0px",
+                  paddingInline: "1.15rem",
+                  fontSize: "18px",
+                  fontWeight: 700
+                }}>
+                  +
+                </Button>
+                <Button title="Remove" variant="contained" onClick={() => removeItem(item.name)} sx={{
+                  minWidth: "0px",
+                  paddingInline: "1.15rem",
+                  fontSize: "18px",
+                  fontWeight: 700
+                }}>
+                  -
+                </Button>
+              </Stack>
+            </Box>
+          ))}
+        </Stack>
+      </Box>
+
+      <Modal open={open} onClose={handleClose}>
+        <Box
+          position="absolute"
+          top="50%"
+          left="50%"
+          width={400}
+          bgcolor="white"
+          border="2px solid black"
+          boxShadow={24}
+          p={4}
+          display="flex"
+          flexDirection="column"
+          gap={3}
+          sx={{
+            transform: "translate(-50%,-50%)"
+          }}
+        >
+          <Typography variant="h5">Add item</Typography>
+          <Stack
+            width="100%"
+            direction="row"
+            spacing={2}
           >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
+            <TextField
+              variant="outlined"
+              fullWidth
+              value={itemName}
+              onChange={e => setItemName(e.target.value)}
             />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+            <Button variant="outlined" onClick={() => {
+              addItem(itemName);
+              setItemName('');
+            }}>
+              Add
+            </Button>
+          </Stack>
+        </Box>
+      </Modal>
+    </Box>
   );
 }
