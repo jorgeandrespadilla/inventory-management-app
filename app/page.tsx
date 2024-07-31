@@ -34,18 +34,12 @@ const InventoryItemComponent = ({ item, addItem, removeItem }: { item: Inventory
     >
       <Stack direction="column" spacing={1} alignItems="start">
         <Typography variant="h5" color="#333" sx={{
-          fontWeight: 600,
-          '&:hover': {
-            color: "#007bff"
-          }
+          fontWeight: 600
         }}>
           {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
         </Typography>
         <Typography variant="h6" color="#333" sx={{
-          fontWeight: 500,
-          '&:hover': {
-            color: "#007bff"
-          }
+          fontWeight: 500
         }}>
           {item.quantity}
         </Typography>
@@ -139,7 +133,10 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const timeout = setTimeout(() => setDebouncedItemFilter(itemFilter), 500);
+    const timeout = setTimeout(
+      () => setDebouncedItemFilter(itemFilter),
+      300
+    );
     return () => clearTimeout(timeout);
   }, [itemFilter]);
 
@@ -162,7 +159,7 @@ export default function Home() {
       p={4}
       bgcolor="#f5f5f5"
     >
-      <Typography variant="h1" color="#333" gutterBottom>
+      <Typography variant="h2" color="#333" gutterBottom>
         Inventory Management
       </Typography>
       <Button variant="contained" onClick={handleOpen} sx={{ mb: 2 }}>
@@ -228,7 +225,7 @@ export default function Home() {
             borderRadius: "8px"
           }}
         >
-          <Typography variant="h5">Add item</Typography>
+          <Typography variant="h5">Add Item</Typography>
           <Stack
             width="100%"
             direction="row"
