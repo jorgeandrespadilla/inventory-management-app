@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { firestore } from '@/firebase';
-import { Box, Button, Modal, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, Input, Modal, Stack, TextField, Typography } from '@mui/material';
 import { collection, deleteDoc, getDoc, getDocs, query, setDoc, doc } from 'firebase/firestore';
 
 interface InventoryItem {
@@ -15,6 +15,8 @@ export default function Home() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [open, setOpen] = useState(false);
   const [itemName, setItemName] = useState('');
+  const [itemFilter, setItemFilter] = useState('');
+  const [debouncedItemFilter, setDebouncedItemFilter] = useState('');
 
   const updateInventory = async () => {
     const snapshot = query(collection(firestore, COLLECTION_NAME));
@@ -23,7 +25,14 @@ export default function Home() {
     docs.forEach((doc) =>
       inventoryList.push({ name: doc.id, ...doc.data() })
     );
-    setInventory(inventoryList);
+
+    if (debouncedItemFilter === '') {
+      setInventory(inventoryList);
+      return;
+    }
+
+    const filteredInventory = inventoryList.filter(item => item.name.toLowerCase().includes(debouncedItemFilter.toLowerCase()));
+    setInventory(filteredInventory);
   };
 
   const addItem = async (item: string) => {
@@ -59,8 +68,13 @@ export default function Home() {
   };
 
   useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedItemFilter(itemFilter), 500);
+    return () => clearTimeout(timeout);
+  }, [itemFilter]);
+
+  useEffect(() => {
     updateInventory();
-  }, []);
+  }, [debouncedItemFilter]);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -90,6 +104,14 @@ export default function Home() {
         <Typography variant='h4' color='#333' p={2}>
           Items
         </Typography>
+
+        <Box width="100%" p={2}>
+          <Input
+            placeholder="Search items"
+            value={itemFilter}
+            onChange={e => setItemFilter(e.target.value)}
+          />
+        </Box>
 
         <Stack
           width="100%"
