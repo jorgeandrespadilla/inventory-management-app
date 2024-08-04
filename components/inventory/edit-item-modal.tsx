@@ -1,0 +1,67 @@
+import React, { useState, useEffect } from 'react';
+import { Box, Button, Modal, Stack, TextField, Typography } from '@mui/material';
+import { InventoryItemData } from '@/types/inventory';
+
+interface EditItemModalProps {
+  open: boolean;
+  onClose: () => void;
+  currentItem: InventoryItemData | null;
+  updateItemQuantity: (item: string, quantity: number) => void;
+}
+
+const EditItemModal: React.FC<EditItemModalProps> = ({ open, onClose, currentItem, updateItemQuantity }) => {
+  const [itemQuantity, setItemQuantity] = useState(0);
+
+  useEffect(() => {
+    if (currentItem) {
+      setItemQuantity(currentItem.quantity);
+    }
+  }, [currentItem]);
+
+  return (
+    <Modal open={open} onClose={onClose}>
+      <Box
+        position="absolute"
+        top="50%"
+        left="50%"
+        width={400}
+        bgcolor="background.paper"
+        border="2px solid #000"
+        boxShadow={24}
+        p={4}
+        display="flex"
+        flexDirection="column"
+        gap={3}
+        sx={{
+          transform: 'translate(-50%, -50%)',
+          borderRadius: 2,
+        }}
+      >
+        <Typography variant="h5">Edit Item</Typography>
+        <Stack
+          width="100%"
+          direction="column"
+          spacing={2}
+        >
+          <TextField
+            variant="outlined"
+            fullWidth
+            value={itemQuantity}
+            onChange={e => setItemQuantity(Number(e.target.value))}
+            type="number"
+          />
+          <Button variant="contained" color="primary" onClick={() => {
+            if (currentItem) {
+              updateItemQuantity(currentItem.name, itemQuantity);
+            }
+            onClose();
+          }}>
+            Save
+          </Button>
+        </Stack>
+      </Box>
+    </Modal>
+  );
+};
+
+export default EditItemModal;
