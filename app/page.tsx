@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Add, Search } from '@mui/icons-material';
-import { Box, Button, Input, Modal, Stack, TextField, Typography, Tooltip, Container, Paper, InputAdornment } from '@mui/material';
-import { collection, getDocs, query, setDoc, doc } from 'firebase/firestore';
+import { Add, Search, Edit, Delete } from '@mui/icons-material';
+import { Box, Button, Input, Modal, Stack, TextField, Typography, Tooltip, Container, Paper, InputAdornment, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+import { collection, getDocs, query, setDoc, doc, deleteDoc } from 'firebase/firestore';
 import { firestore } from '@/firebase';
 
 interface InventoryItem {
@@ -14,9 +14,7 @@ interface InventoryItem {
 
 const COLLECTION_NAME = 'inventory';
 
-const InventoryItemComponent = ({ item, updateItemQuantity }: { item: InventoryItem, updateItemQuantity: (name: string, quantity: number) => void }) => {
-  const [quantity, setQuantity] = useState(item.quantity);
-
+const InventoryItemComponent = ({ item, openEditModal, openDeleteDialog }: { item: InventoryItem, openEditModal: (item: InventoryItem) => void, openDeleteDialog: (item: InventoryItem) => void }) => {
   return (
     <Paper
       key={item.name}
@@ -38,17 +36,18 @@ const InventoryItemComponent = ({ item, updateItemQuantity }: { item: InventoryI
         <Typography variant="h5" color="textPrimary">
           {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
         </Typography>
-        <TextField
-          type="number"
-          value={quantity}
-          onChange={(e) => setQuantity(Number(e.target.value))}
-          variant="outlined"
-          size="small"
-        />
+        <Typography variant="body1" color="textSecondary">
+          Quantity: {item.quantity}
+        </Typography>
       </Stack>
-      <Button variant="contained" color="primary" onClick={() => updateItemQuantity(item.name, quantity)}>
-        Save
-      </Button>
+      <Stack direction="row" spacing={1}>
+        <Button variant="contained" color="primary" startIcon={<Edit />} onClick={() => openEditModal(item)}>
+          Edit
+        </Button>
+        <Button variant="contained" color="secondary" startIcon={<Delete />} onClick={() => openDeleteDialog(item)}>
+          Delete
+        </Button>
+      </Stack>
     </Paper>
   );
 };
@@ -56,7 +55,11 @@ const InventoryItemComponent = ({ item, updateItemQuantity }: { item: InventoryI
 export default function Home() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [open, setOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [currentItem, setCurrentItem] = useState<InventoryItem | null>(null);
   const [itemName, setItemName] = useState('');
+  const [itemQuantity, setItemQuantity] = useState(0);
   const [itemFilter, setItemFilter] = useState('');
   const [debouncedItemFilter, setDebouncedItemFilter] = useState('');
 
@@ -91,6 +94,12 @@ export default function Home() {
     await updateInventory();
   };
 
+  const deleteItem = async (item: string) => {
+    const docRef = doc(collection(firestore, COLLECTION_NAME), item);
+    await deleteDoc(docRef);
+    await updateInventory();
+  };
+
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedItemFilter(itemFilter), 300);
     return () => clearTimeout(timeout);
@@ -102,6 +111,27 @@ export default function Home() {
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+
+  const handleEditModalOpen = (item: InventoryItem) => {
+    setCurrentItem(item);
+    setItemQuantity(item.quantity);
+    setEditModalOpen(true);
+  };
+
+  const handleEditModalClose = () => {
+    setEditModalOpen(false);
+    setCurrentItem(null);
+  };
+
+  const handleDeleteDialogOpen = (item: InventoryItem) => {
+    setCurrentItem(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteDialogClose = () => {
+    setDeleteDialogOpen(false);
+    setCurrentItem(null);
+  };
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
@@ -119,13 +149,17 @@ export default function Home() {
       </Button>
       <Paper elevation={3} sx={{ p: 2, borderRadius: 2 }}>
         <Box width="100%" p={2}>
-          <Input
-            startAdornment={
-              <InputAdornment position="start">
-                <Search />
-              </InputAdornment>
-            }
+          <TextField
+            type="search"
+            variant="outlined"
             placeholder="Search items"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search />
+                </InputAdornment>
+              ),
+            }}
             value={itemFilter}
             onChange={e => setItemFilter(e.target.value)}
             fullWidth
@@ -139,15 +173,22 @@ export default function Home() {
           overflow="auto"
           p={2}
         >
+          {inventory.length === 0 && (
+            <Typography variant="body1" color="textSecondary">
+              No items found
+              </Typography>
+          )}
           {inventory.map(item => (
             <InventoryItemComponent
               key={item.name}
               item={item}
-              updateItemQuantity={updateItemQuantity}
+              openEditModal={handleEditModalOpen}
+              openDeleteDialog={handleDeleteDialogOpen}
             />
           ))}
         </Stack>
       </Paper>
+
       <Modal open={open} onClose={handleClose}>
         <Box
           position="absolute"
@@ -188,6 +229,73 @@ export default function Home() {
           </Stack>
         </Box>
       </Modal>
+
+      <Modal open={editModalOpen} onClose={handleEditModalClose}>
+        <Box
+          position="absolute"
+          top="50%"
+          left="50%"
+          width={400}
+          bgcolor="background.paper"
+          border="2px solid #000"
+          boxShadow={24}
+          p={4}
+          display="flex"
+          flexDirection="column"
+          gap={3}
+          sx={{
+            transform: 'translate(-50%, -50%)',
+            borderRadius: 2,
+          }}
+        >
+          <Typography variant="h5">Edit Item</Typography>
+          <Stack
+            width="100%"
+            direction="column"
+            spacing={2}
+          >
+            <TextField
+              variant="outlined"
+              fullWidth
+              value={itemQuantity}
+              onChange={e => setItemQuantity(Number(e.target.value))}
+              type="number"
+            />
+            <Button variant="contained" color="primary" onClick={() => {
+              if (currentItem) {
+                updateItemQuantity(currentItem.name, itemQuantity);
+              }
+              handleEditModalClose();
+            }}>
+              Save
+            </Button>
+          </Stack>
+        </Box>
+      </Modal>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteDialogClose}
+      >
+        <DialogTitle>Delete Item</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this item?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteDialogClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={() => {
+            if (currentItem) {
+              deleteItem(currentItem.name);
+            }
+            handleDeleteDialogClose();
+          }} color="secondary">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }
