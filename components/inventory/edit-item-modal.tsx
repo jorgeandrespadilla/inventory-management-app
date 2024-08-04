@@ -11,12 +11,24 @@ interface EditItemModalProps {
 
 const EditItemModal: React.FC<EditItemModalProps> = ({ open, onClose, currentItem, updateItemQuantity }) => {
   const [itemQuantity, setItemQuantity] = useState(0);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (currentItem) {
       setItemQuantity(currentItem.quantity);
+      setError('');
     }
   }, [currentItem]);
+
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(e.target.value);
+    if (value < 0) {
+      setError('Quantity cannot be negative');
+    } else {
+      setError('');
+    }
+    setItemQuantity(value);
+  };
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -44,18 +56,26 @@ const EditItemModal: React.FC<EditItemModalProps> = ({ open, onClose, currentIte
           spacing={2}
         >
           <TextField
+            label="Quantity"
             variant="outlined"
             fullWidth
             value={itemQuantity}
-            onChange={e => setItemQuantity(Number(e.target.value))}
+            onChange={handleQuantityChange}
             type="number"
+            error={!!error}
+            helperText={error}
           />
-          <Button variant="contained" color="primary" onClick={() => {
-            if (currentItem) {
-              updateItemQuantity(currentItem.name, itemQuantity);
-            }
-            onClose();
-          }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              if (currentItem) {
+                updateItemQuantity(currentItem.name, itemQuantity);
+              }
+              onClose();
+            }}
+            disabled={!!error}
+          >
             Save
           </Button>
         </Stack>

@@ -32,10 +32,11 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ open, onClose, addItem }) =
         <Typography variant="h5">Add Item</Typography>
         <Stack
           width="100%"
-          direction="row"
+          direction="column"
           spacing={2}
         >
           <TextField
+            label="Name"
             variant="outlined"
             fullWidth
             value={itemName}
