@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import { createTheme } from '@mui/material/styles';
 import { blue, yellow } from "@mui/material/colors";
 
-const inter = Inter({ subsets: ['latin'] });
+export const inter = Inter({ subsets: ['latin'] });
 
 const theme = createTheme({
   palette: {

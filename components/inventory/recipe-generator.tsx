@@ -1,8 +1,9 @@
 import { generateRecipe } from "@/app/actions";
+import { inter } from "@/theme";
 import { AutoAwesome } from "@mui/icons-material";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, Paper } from "@mui/material";
 import { readStreamableValue } from "ai/rsc";
-import MuiMarkdown from "mui-markdown";
+import MuiMarkdown, { getOverrides } from "mui-markdown";
 import { useState } from "react";
 
 const SAMPLE_RECIPE = `
@@ -32,7 +33,7 @@ const SAMPLE_RECIPE = `
 9. **Serve**: Serve hot and enjoy!
 
 This recipe uses a combination of the available ingredients to create a unique and tasty dish. The peanut butter adds a rich and creamy element, while the canned tomatoes provide a burst of flavor. The garlic powder and pepper add a savory touch, and the sugar balances out the flavors. This recipe is perfect for a quick and easy dinner or lunch.
-`; 
+`.trim(); 
 
 const RecipeGenerator = () => {
   const [recipe, setRecipe] = useState<string>('');
@@ -53,9 +54,58 @@ const RecipeGenerator = () => {
       <Box sx={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'start', width: '100%' }}>
         {
           recipe ? (
-            <Box sx={{ marginTop: '1rem' }}>
-              <MuiMarkdown>{recipe}</MuiMarkdown>
-            </Box>
+            <Paper sx={{ marginTop: '1rem', marginBottom: '2rem', padding: '2rem', borderRadius: 3 }}>
+              <MuiMarkdown
+                overrides={{
+                  ...getOverrides(), // This will keep the other default overrides
+                  h3: {
+                    props: {
+                      style: {
+                        fontFamily: inter.style.fontFamily,
+                        fontSize: '1.5rem',
+                        paddingBottom: '1.5rem',
+                      }
+                    } as React.HTMLProps<HTMLHeadingElement>,
+                  },
+                  p: {
+                    props: {
+                      style: {
+                        fontFamily: inter.style.fontFamily,
+                        paddingBottom: '0.5rem',
+                      }
+                    } as React.HTMLProps<HTMLParagraphElement>,
+                  },
+                  ol: {
+                    props: {
+                      style: {
+                        fontFamily: inter.style.fontFamily,
+                        paddingLeft: '1.5rem',
+                        paddingBottom: '0.75rem',
+                      }
+                    } as React.HTMLProps<HTMLOListElement>,
+                  },
+                  ul: {
+                    props: {
+                      style: {
+                        fontFamily: inter.style.fontFamily,
+                        paddingLeft: '1.5rem',
+                        paddingBottom: '0.75rem',
+                      }
+                    } as React.HTMLProps<HTMLUListElement>,
+                  },
+                  li: {
+                    props: {
+                      style: {
+                        fontFamily: inter.style.fontFamily,
+                        paddingBottom: '0.5rem',
+                      }
+                    } as React.HTMLProps<HTMLLIElement>,
+                  },
+                }}              
+              >
+                {`### ${recipe}`}	
+              </MuiMarkdown>
+            </Paper>
           ) : null
         }
       </Box>
