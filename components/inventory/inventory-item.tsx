@@ -1,6 +1,7 @@
-import { InventoryItemData } from "@/types/inventory";
-import { Delete, Edit } from "@mui/icons-material";
+import Image from "next/image";
 import { Button, Paper, Stack, Typography } from "@mui/material";
+import { Delete, Edit } from "@mui/icons-material";
+import { InventoryItemData } from "@/types/inventory";
 
 interface InventoryItemProps {
   item: InventoryItemData;
@@ -8,10 +9,10 @@ interface InventoryItemProps {
   openDeleteDialog: (item: InventoryItemData) => void;
 }
 
-const InventoryItem = ({ 
+const InventoryItem = ({
   item,
   openEditModal,
-  openDeleteDialog 
+  openDeleteDialog
 }: InventoryItemProps) => {
   return (
     <Paper
@@ -30,13 +31,18 @@ const InventoryItem = ({
         },
       }}
     >
-      <Stack direction="column" spacing={1} alignItems="start">
-        <Typography variant="h5" color="textPrimary">
-          {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
-        </Typography>
-        <Typography variant="body1" color="textSecondary">
-          Quantity: {item.quantity}
-        </Typography>
+      <Stack direction="row" alignItems="center" spacing={2}>
+        {item.image && (
+          <Image src={item.image} alt={item.name} width={100} height={100} />
+        )}
+        <Stack direction="column" spacing={1} alignItems="start">
+          <Typography variant="h5" color="textPrimary">
+            {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+          </Typography>
+          <Typography variant="body1" color="textSecondary">
+            Quantity: {item.quantity}
+          </Typography>
+        </Stack>
       </Stack>
       <Stack direction="row" spacing={1}>
         <Button variant="contained" color="primary" startIcon={<Edit />} onClick={() => openEditModal(item)}>

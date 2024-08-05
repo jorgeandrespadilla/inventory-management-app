@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import { Add, Search } from '@mui/icons-material';
 import { Box, Button, Stack, TextField, Typography, Container, Paper, InputAdornment } from '@mui/material';
 import { collection, getDocs, query, setDoc, doc, deleteDoc } from 'firebase/firestore';
-import { firestore } from '@/firebase';
-import { InventoryItemData } from '@/types/inventory';
+import { firestore, storage } from '@/firebase';
+import { AddItemData, EditItemData, InventoryItemData } from '@/types/inventory';
 import InventoryItem from '@/components/inventory/inventory-item';
 import DeleteItemDialog from '@/components/inventory/delete-item-dialog';
 import EditItemModal from '@/components/inventory/edit-item-modal';
 import AddItemModal from '@/components/inventory/add-item-modal';
+import { deleteObject, ref } from 'firebase/storage';
 
 const COLLECTION_NAME = 'inventory';
 
@@ -31,6 +32,7 @@ export default function Home() {
       inventoryList.push({
         name: doc.id,
         quantity: docData.quantity,
+        image: docData.image ?? null
       });
     });
     if (debouncedItemFilter === '') {
@@ -41,21 +43,43 @@ export default function Home() {
     setInventory(filteredInventory);
   };
 
-  const addItem = async (item: string) => {
-    const docRef = doc(collection(firestore, COLLECTION_NAME), item);
-    await setDoc(docRef, { quantity: 0 });
+  const addItem = async (item: AddItemData) => {
+    const docRef = doc(collection(firestore, COLLECTION_NAME), item.name);
+    await setDoc(docRef, { 
+      quantity: 0, 
+      image: item.image ?? null
+    });
     await updateInventory();
   };
 
-  const updateItemQuantity = async (item: string, quantity: number) => {
-    const docRef = doc(collection(firestore, COLLECTION_NAME), item);
-    await setDoc(docRef, { quantity });
+  const updateItemQuantity = async (item: EditItemData) => {
+    const docRef = doc(collection(firestore, COLLECTION_NAME), item.name);
+    await setDoc(docRef, { 
+      quantity: item.quantity, 
+      image: item.image ?? null
+    });
     await updateInventory();
   };
 
-  const deleteItem = async (item: string) => {
-    const docRef = doc(collection(firestore, COLLECTION_NAME), item);
-    await deleteDoc(docRef);
+  const deleteItem = async (item: InventoryItemData) => {
+    const docRef = doc(collection(firestore, COLLECTION_NAME), item.name);
+    // Delete image from storage
+    if (item.image) {
+      try {
+        const storageRef = ref(storage, item.image);
+        await deleteObject(storageRef);
+      }
+      catch (error) {
+        console.error('Error deleting image:', error);
+      }
+    }
+    // Delete item
+    try {
+      await deleteDoc(docRef);
+    }
+    catch (error) {
+      console.error('Error deleting item:', error);
+    }
     await updateInventory();
   };
 
@@ -157,7 +181,7 @@ export default function Home() {
         open={editModalOpen}
         onClose={handleEditModalClose}
         currentItem={currentItem}
-        updateItemQuantity={updateItemQuantity}
+        editItem={updateItemQuantity}
       />
 
       <DeleteItemDialog

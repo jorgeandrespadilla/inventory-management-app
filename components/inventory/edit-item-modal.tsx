@@ -1,21 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Modal, Stack, TextField, Typography } from '@mui/material';
-import { InventoryItemData } from '@/types/inventory';
+import { EditItemData, InventoryItemData } from '@/types/inventory';
+import ImageUploader from '../common/image-uploader';
 
 interface EditItemModalProps {
   open: boolean;
   onClose: () => void;
   currentItem: InventoryItemData | null;
-  updateItemQuantity: (item: string, quantity: number) => void;
+  editItem: (item: EditItemData) => void;
 }
 
-const EditItemModal: React.FC<EditItemModalProps> = ({ open, onClose, currentItem, updateItemQuantity }) => {
+const EditItemModal: React.FC<EditItemModalProps> = ({ open, onClose, currentItem, editItem }) => {
   const [itemQuantity, setItemQuantity] = useState(0);
+  const [itemImage, setItemImage] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (currentItem) {
       setItemQuantity(currentItem.quantity);
+      setItemImage(currentItem.image);
       setError('');
     }
   }, [currentItem]);
@@ -65,12 +68,17 @@ const EditItemModal: React.FC<EditItemModalProps> = ({ open, onClose, currentIte
             error={!!error}
             helperText={error}
           />
+          <ImageUploader initialImage={itemImage} onImageChange={setItemImage} />
           <Button
             variant="contained"
             color="primary"
             onClick={() => {
               if (currentItem) {
-                updateItemQuantity(currentItem.name, itemQuantity);
+                editItem({
+                  name: currentItem.name,
+                  quantity: itemQuantity,
+                  image: itemImage,
+                });
               }
               onClose();
             }}

@@ -1,14 +1,27 @@
 import React, { useState } from 'react';
 import { Box, Button, Modal, Stack, TextField, Typography } from '@mui/material';
+import { AddItemData } from '@/types/inventory';
+import ImageUploader from '@/components/common/image-uploader';
 
 interface AddItemModalProps {
   open: boolean;
   onClose: () => void;
-  addItem: (item: string) => void;
+  addItem: (item: AddItemData) => void;
 }
 
 const AddItemModal: React.FC<AddItemModalProps> = ({ open, onClose, addItem }) => {
   const [itemName, setItemName] = useState('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  const handleAddItem = () => {
+    addItem({
+      name: itemName,
+      image: imageUrl,
+    });
+    setItemName('');
+    setImageUrl(null);
+    onClose();
+  };
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -42,11 +55,8 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ open, onClose, addItem }) =
             value={itemName}
             onChange={e => setItemName(e.target.value)}
           />
-          <Button variant="contained" color="primary" onClick={() => {
-            addItem(itemName);
-            setItemName('');
-            onClose();
-          }}>
+          <ImageUploader onImageChange={setImageUrl} />
+          <Button variant="contained" color="primary" onClick={handleAddItem}>
             Add
           </Button>
         </Stack>

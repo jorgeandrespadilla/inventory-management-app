@@ -6,7 +6,7 @@ interface DeleteItemDialogProps {
   open: boolean;
   onClose: () => void;
   currentItem: InventoryItemData | null;
-  deleteItem: (item: string) => void;
+  deleteItem: (item: InventoryItemData) => void;
 }
 
 const DeleteItemDialog: React.FC<DeleteItemDialogProps> = ({ open, onClose, currentItem, deleteItem }) => {
@@ -24,7 +24,7 @@ const DeleteItemDialog: React.FC<DeleteItemDialogProps> = ({ open, onClose, curr
         </Button>
         <Button onClick={() => {
           if (currentItem) {
-            deleteItem(currentItem.name);
+            deleteItem(currentItem);
           }
           onClose();
         }} color="secondary">

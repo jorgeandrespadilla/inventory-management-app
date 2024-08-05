@@ -20,7 +20,7 @@ const VisuallyHiddenInput = styled('input')({
 });
 
 interface ImageUploaderProps {
-  initialImageUrl?: string;
+  initialImage?: string | null;
   onImageChange?: (imageUrl: string | null) => void;
 }
 
@@ -30,9 +30,9 @@ const generateUniqueFileName = (file: File) => {
   return `${randomId}.${extension}`;
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ initialImageUrl, onImageChange }) => {
+const ImageUploader: React.FC<ImageUploaderProps> = ({ initialImage, onImageChange }) => {
   const [loading, setLoading] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string | null>(initialImageUrl || null);
+  const [imageUrl, setImageUrl] = useState<string | null>(initialImage ?? null);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -57,15 +57,16 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ initialImageUrl, onImageC
   };
 
   const handleRemoveImage = async () => {
-    if (imageUrl) {
-      const storageRef = ref(storage, initialImageUrl);
-      await deleteObject(storageRef);
-      console.log('Image deleted successfully');
+    if (!imageUrl) {
+      return;
     }
+    const storageRef = ref(storage, imageUrl);
+    await deleteObject(storageRef);
     setImageUrl(null);
     if (onImageChange) {
       onImageChange(null);
     }
+    console.log('Image deleted successfully');
   };
 
   return (
