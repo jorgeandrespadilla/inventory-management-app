@@ -11,8 +11,8 @@ import DeleteItemDialog from '@/components/inventory/delete-item-dialog';
 import EditItemModal from '@/components/inventory/edit-item-modal';
 import AddItemModal from '@/components/inventory/add-item-modal';
 import { deleteObject, ref } from 'firebase/storage';
-
-const COLLECTION_NAME = 'inventory';
+import { INVENTORY_COLLECTION_NAME } from '@/app/constants';
+import RecipeGenerator from '@/components/inventory/recipe-generator';
 
 export default function Home() {
   const [inventory, setInventory] = useState<InventoryItemData[]>([]);
@@ -24,7 +24,7 @@ export default function Home() {
   const [debouncedItemFilter, setDebouncedItemFilter] = useState('');
 
   const updateInventory = async () => {
-    const snapshot = query(collection(firestore, COLLECTION_NAME));
+    const snapshot = query(collection(firestore, INVENTORY_COLLECTION_NAME));
     const docs = await getDocs(snapshot);
     const inventoryList: InventoryItemData[] = [];
     docs.forEach((doc) => {
@@ -44,16 +44,16 @@ export default function Home() {
   };
 
   const addItem = async (item: AddItemData) => {
-    const docRef = doc(collection(firestore, COLLECTION_NAME), item.name);
+    const docRef = doc(collection(firestore, INVENTORY_COLLECTION_NAME), item.name);
     await setDoc(docRef, { 
-      quantity: 0, 
+      quantity: 1, 
       image: item.image ?? null
     });
     await updateInventory();
   };
 
   const updateItemQuantity = async (item: EditItemData) => {
-    const docRef = doc(collection(firestore, COLLECTION_NAME), item.name);
+    const docRef = doc(collection(firestore, INVENTORY_COLLECTION_NAME), item.name);
     await setDoc(docRef, { 
       quantity: item.quantity, 
       image: item.image ?? null
@@ -62,7 +62,7 @@ export default function Home() {
   };
 
   const deleteItem = async (item: InventoryItemData) => {
-    const docRef = doc(collection(firestore, COLLECTION_NAME), item.name);
+    const docRef = doc(collection(firestore, INVENTORY_COLLECTION_NAME), item.name);
     // Delete image from storage
     if (item.image) {
       try {
@@ -170,6 +170,8 @@ export default function Home() {
           ))}
         </Stack>
       </Paper>
+
+      <RecipeGenerator />
 
       <AddItemModal
         open={open}
